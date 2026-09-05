@@ -14,6 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
         <h2>Mis Pagos — Hola, {{ nombre }}</h2>
         <div>
           <a routerLink="/pagador/nuevo-pago" class="btn-primary">+ Nuevo Pago</a>
+          <button class="btn-secondary" (click)="cargar()" [disabled]="loading">↻ Recargar</button>
           <button class="btn-secondary" (click)="logout()">Cerrar sesión</button>
         </div>
       </header>
@@ -67,6 +68,11 @@ export class MisPagosComponent implements OnInit {
 
   ngOnInit(): void {
     this.nombre = this.auth.getNombre();
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading = true;
     this.svc.getMisTransacciones().subscribe({
       next: (data) => { this.transacciones = data; this.loading = false; },
       error: () => this.loading = false

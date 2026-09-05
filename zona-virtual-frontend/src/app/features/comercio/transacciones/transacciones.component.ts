@@ -13,7 +13,10 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="page">
       <header>
         <h2>Transacciones Recibidas — {{ nombre }}</h2>
-        <button class="btn-secondary" (click)="logout()">Cerrar sesión</button>
+        <div>
+          <button class="btn-secondary" (click)="recargar()" [disabled]="loading">↻ Recargar</button>
+          <button class="btn-secondary" (click)="logout()">Cerrar sesión</button>
+        </div>
       </header>
 
       <div class="filtros">
@@ -184,6 +187,11 @@ export class TransaccionesComercioComponent implements OnInit {
       next: () => { this.editando = false; this.buscar(); this.cargarTotal(); },
       error: (err) => this.errorEdicion = err.error?.mensaje ?? 'Error al modificar.'
     });
+  }
+
+  recargar(): void {
+    this.cargarTotal();
+    this.buscar();
   }
 
   logout(): void {
