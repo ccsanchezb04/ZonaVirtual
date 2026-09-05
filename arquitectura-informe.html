@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZonaVirtual — Informe de Arquitectura</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      color: #2d3748;
+      padding: 40px 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #2c7a4b, #1a4f30);
+      color: white;
+      padding: 36px 40px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 6px; }
+    .header p { opacity: 0.85; font-size: 1rem; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-top: 12px;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      color: #2c7a4b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card h2 .icon { font-size: 1.4rem; }
+    .card p { line-height: 1.7; margin-bottom: 10px; font-size: 0.97rem; }
+
+    /* Diagram box */
+    .diagram {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 10px;
+      padding: 20px 24px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+    .diagram .kw { color: #89b4fa; }
+    .diagram .str { color: #a6e3a1; }
+    .diagram .comment { color: #6c7086; }
+
+    /* Layers */
+    .layers { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .layer {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border-left: 5px solid;
+    }
+    .layer.domain   { background: #e8f5e9; border-color: #2c7a4b; }
+    .layer.app      { background: #e3f2fd; border-color: #1976d2; }
+    .layer.infra    { background: #fff8e1; border-color: #f9a825; }
+    .layer.api      { background: #fce4ec; border-color: #c62828; }
+    .layer .layer-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .layer .layer-desc  { font-size: 0.88rem; color: #555; line-height: 1.5; }
+    .layer .layer-dep   { font-size: 0.8rem; color: #888; margin-top: 4px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.9rem; }
+    th { background: #2c7a4b; color: white; padding: 10px 14px; text-align: left; }
+    td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f7fafc; }
+
+    /* Code snippet */
+    code {
+      background: #edf2f7;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      color: #c0392b;
+    }
+    pre.snippet {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 18px 22px;
+      border-radius: 10px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      margin: 14px 0;
+      overflow-x: auto;
+    }
+    pre.snippet .kw { color: #89b4fa; }
+    pre.snippet .str { color: #a6e3a1; }
+    pre.snippet .num { color: #fab387; }
+    pre.snippet .comment { color: #6c7086; font-style: italic; }
+
+    /* Flow steps */
+    .flow { counter-reset: step; display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .flow-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 16px; background: #f7fafc; border-radius: 8px;
+    }
+    .flow-item::before {
+      counter-increment: step;
+      content: counter(step);
+      background: #2c7a4b; color: white;
+      min-width: 26px; height: 26px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .flow-item span { font-size: 0.92rem; line-height: 1.5; padding-top: 3px; }
+
+    /* Footer */
+    .footer {
+      text-align: center; margin-top: 32px;
+      font-size: 0.82rem; color: #a0aec0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>ZonaVirtual</h1>
+    <p>Informe de Arquitectura — Sistema de Gestión de Pagos</p>
+    <span class="badge">ASP.NET Core 8 · Angular 17 · SQL Server · EF Core</span>
+  </div>
+
+  <!-- ¿Qué hace? -->
+  <div class="card">
+    <h2><span class="icon">🎯</span> ¿Qué hace la aplicación?</h2>
+    <p>ZonaVirtual es un sistema para gestionar transacciones de pago entre usuarios y comercios. Existen dos tipos de usuarios:</p>
+    <table>
+      <thead>
+        <tr><th>Perfil</th><th>ID</th><th>Capacidades</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pagador</strong></td>
+          <td><code>perfil = 1</code></td>
+          <td>Ver sus propias transacciones, crear nuevas, explorar comercios</td>
+        </tr>
+        <tr>
+          <td><strong>Comercio</strong></td>
+          <td><code>perfil = 2</code></td>
+          <td>Ver y filtrar transacciones recibidas, modificar las no aprobadas</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Gran imagen -->
+  <div class="card">
+    <h2><span class="icon">🗺️</span> La gran imagen: Cliente ↔ Servidor ↔ Base de Datos</h2>
+    <div class="diagram">
+<span class="str">[ Navegador Web ]</span><br>
+&nbsp;&nbsp;Angular (zona-virtual-frontend/)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">↕ HTTP + JSON (REST API)</span><br>
+<span class="str">[ Servidor ]</span><br>
+&nbsp;&nbsp;ASP.NET Core Web API (ZonaVirtual.API/)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">↕ EF Core (ORM)</span><br>
+<span class="str">[ Base de Datos ]</span><br>
+&nbsp;&nbsp;SQL Server — ZonaVirtualDB
+    </div>
+    <p>El navegador <strong>nunca toca la base de datos directamente</strong>. Toda operación pasa por el servidor. El servidor habla con la base de datos a través de Entity Framework Core, un ORM que traduce objetos C# en tablas SQL.</p>
+  </div>
+
+  <!-- Capas del backend -->
+  <div class="card">
+    <h2><span class="icon">🧅</span> Backend: 4 Capas (como una cebolla)</h2>
+    <div class="diagram">API ──→ Application ──→ Domain ←── Infrastructure</div>
+    <div class="layers">
+      <div class="layer domain">
+        <div>
+          <div class="layer-title">🟢 ZonaVirtual.Domain — El corazón del negocio</div>
+          <div class="layer-desc">Contiene las <strong>Entidades</strong> (Usuario, Transaccion, Comercio…) y las <strong>Interfaces</strong> de repositorios. Define <em>qué existe</em> sin decir <em>cómo</em> se guarda.</div>
+          <div class="layer-dep">Depende de: <strong>nadie</strong> — es el más puro.</div>
+        </div>
+      </div>
+      <div class="layer app">
+        <div>
+          <div class="layer-title">🔵 ZonaVirtual.Application — Lógica de negocio</div>
+          <div class="layer-desc">Contiene los <strong>Servicios</strong> (AuthService, ComercioService…) y los <strong>DTOs</strong> (objetos de transferencia de datos). Aquí viven las reglas: cómo registrar un usuario, validar una contraseña, aprobar una transacción.</div>
+          <div class="layer-dep">Depende de: <strong>Domain</strong>.</div>
+        </div>
+      </div>
+      <div class="layer infra">
+        <div>
+          <div class="layer-title">🟡 ZonaVirtual.Infrastructure — Conexión real con la BD</div>
+          <div class="layer-desc">Implementa las interfaces del Domain usando <strong>Entity Framework Core</strong>. Aquí se escribe el SQL (a través de LINQ). Si mañana cambias SQL Server por PostgreSQL, <em>solo tocas esta capa</em>.</div>
+          <div class="layer-dep">Depende de: <strong>Domain</strong>.</div>
+        </div>
+      </div>
+      <div class="layer api">
+        <div>
+          <div class="layer-title">🔴 ZonaVirtual.API — Puerta de entrada HTTP</div>
+          <div class="layer-desc">Los <strong>Controllers</strong> reciben peticiones HTTP y devuelven JSON. Configuran la inyección de dependencias, el JWT y el middleware. El controller llama al servicio; nunca toca la base de datos directamente.</div>
+          <div class="layer-dep">Depende de: <strong>Application</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entidades clave -->
+  <div class="card">
+    <h2><span class="icon">🗂️</span> Entidades Clave del Dominio</h2>
+    <pre class="snippet"><span class="comment">// Usuario — tiene perfil 1 (Pagador) o 2 (Comercio)</span>
+<span class="kw">public class</span> Usuario {
+    <span class="kw">public int</span> Id { <span class="kw">get</span>; <span class="kw">set</span>; }
+    <span class="kw">public string</span> Nombre { <span class="kw">get</span>; <span class="kw">set</span>; }
+    <span class="kw">public int</span> Perfil { <span class="kw">get</span>; <span class="kw">set</span>; }   <span class="comment">// 1=Pagador, 2=Comercio</span>
+    <span class="kw">public int?</span> ComercioId { <span class="kw">get</span>; <span class="kw">set</span>; } <span class="comment">// solo si es Comercio</span>
+}
+
+<span class="comment">// Transaccion — vincula un Pagador con un Comercio</span>
+<span class="kw">public class</span> Transaccion {
+    <span class="kw">public int</span> MedioPago { <span class="kw">get</span>; <span class="kw">set</span>; }  <span class="comment">// 32=Crédito, 29=PSE, 41=Gana, 42=Caja</span>
+    <span class="kw">public int</span> Estado    { <span class="kw">get</span>; <span class="kw">set</span>; }  <span class="comment">// 1=Aprobada, 999=Pendiente, 1000/1001=Rechazada</span>
+    <span class="kw">public decimal</span> Total { <span class="kw">get</span>; <span class="kw">set</span>; }
+    <span class="kw">public int</span> UsuarioId { <span class="kw">get</span>; <span class="kw">set</span>; }
+    <span class="kw">public int</span> ComercioId { <span class="kw">get</span>; <span class="kw">set</span>; }
+}</pre>
+    <table>
+      <thead><tr><th>Estado</th><th>ID</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>Aprobada</td><td><code>1</code></td><td>Finalizada — no se puede modificar</td></tr>
+        <tr><td>Pendiente</td><td><code>999</code></td><td>En proceso — editable por el Comercio</td></tr>
+        <tr><td>Rechazada</td><td><code>1000</code></td><td>Rechazada — editable por el Comercio</td></tr>
+        <tr><td>Rechazada SR</td><td><code>1001</code></td><td>Rechazada sin respuesta — editable por el Comercio</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- JWT -->
+  <div class="card">
+    <h2><span class="icon">🔐</span> Autenticación: JWT (JSON Web Token)</h2>
+    <p>Al hacer login, el servidor genera un token JWT firmado que contiene la identidad del usuario. En cada petición siguiente, Angular lo adjunta automáticamente al header HTTP.</p>
+    <div class="diagram">
+<span class="comment">// Dentro del token (claims)</span><br>
+<span class="str">NameIdentifier</span> → usuario.Id<br>
+<span class="str">Name</span>           → usuario.Identificacion<br>
+<span class="str">"perfil"</span>       → <span class="num">1</span> o <span class="num">2</span><br>
+<span class="str">"comercioId"</span>   → id del comercio (o vacío si es Pagador)<br>
+<br>
+<span class="comment">// El interceptor de Angular lo pega en cada llamada</span><br>
+<span class="kw">Authorization: Bearer</span> eyJhbGciOiJIUzI1NiJ9...
+    </div>
+    <p>Las contraseñas se almacenan con <strong>PBKDF2-SHA256</strong>, 100 000 iteraciones y sal aleatoria de 16 bytes — nunca en texto plano.</p>
+  </div>
+
+  <!-- Frontend -->
+  <div class="card">
+    <h2><span class="icon">⚡</span> Frontend Angular 17 — Rutas y Protección</h2>
+    <div class="diagram">
+/auth              → Login (pública)<br>
+/pagador/mis-pagos → Solo Pagadores  <span class="comment">← authGuard</span><br>
+/pagador/nuevo-pago → Solo Pagadores <span class="comment">← authGuard</span><br>
+/comercio/transacciones → Solo Comercios <span class="comment">← authGuard</span>
+    </div>
+    <p>El <code>authGuard</code> verifica que exista un token válido antes de mostrar la pantalla. Las rutas usan <strong>lazy loading</strong>: el código de cada sección se descarga solo cuando el usuario la visita, no todo de golpe al inicio.</p>
+  </div>
+
+  <!-- Flujo completo -->
+  <div class="card">
+    <h2><span class="icon">🔄</span> Flujo Completo de una Transacción</h2>
+    <div class="flow">
+      <div class="flow-item"><span>El Pagador abre <code>/pagador/nuevo-pago</code> en el navegador.</span></div>
+      <div class="flow-item"><span>Angular envía <code>POST /api/Pagador/CrearTransaccion</code> con el token JWT en el header.</span></div>
+      <div class="flow-item"><span><code>PagadorController</code> extrae el <code>usuarioId</code> del token y llama a <code>PagadorService</code>.</span></div>
+      <div class="flow-item"><span><code>PagadorService</code> crea el objeto <code>Transaccion</code> y lo pasa al repositorio.</span></div>
+      <div class="flow-item"><span>Infrastructure guarda el registro en la tabla <code>Transacciones</code> de SQL Server.</span></div>
+      <div class="flow-item"><span>El Comercio entra a <code>/comercio/transacciones</code> y ve la nueva transacción listada.</span></div>
+      <div class="flow-item"><span>El Comercio puede editarla (cambiar estado, medio de pago, etc.) mientras no esté Aprobada.</span></div>
+    </div>
+  </div>
+
+  <!-- Tabla resumen -->
+  <div class="card">
+    <h2><span class="icon">📋</span> Resumen: ¿Por qué esta arquitectura?</h2>
+    <table>
+      <thead>
+        <tr><th>Capa</th><th>Responsabilidad</th><th>Depende de</th><th>Beneficio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Domain</strong></td><td>Definir qué existe</td><td>Nadie</td><td>Estable, reutilizable</td></tr>
+        <tr><td><strong>Application</strong></td><td>Reglas de negocio</td><td>Domain</td><td>Testeable sin BD</td></tr>
+        <tr><td><strong>Infrastructure</strong></td><td>Hablar con la BD</td><td>Domain</td><td>Intercambiable (SQL/Postgres)</td></tr>
+        <tr><td><strong>API</strong></td><td>Recibir HTTP</td><td>Application</td><td>Separado del negocio</td></tr>
+        <tr><td><strong>Frontend</strong></td><td>UI en el navegador</td><td>API (HTTP)</td><td>Independiente del servidor</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    ZonaVirtual · Generado por Claude Code · 2026
+  </div>
+
+</div>
+</body>
+</html>

@@ -68,6 +68,7 @@ import { AuthService } from '../../../core/services/auth.service';
           </select>
           <label>Estado</label>
           <select [(ngModel)]="formEdicion.estado">
+            <option value="1">Aprobada</option>
             <option value="999">Pendiente</option>
             <option value="1000">Rechazada</option>
             <option value="1001">Rechazada SR</option>
