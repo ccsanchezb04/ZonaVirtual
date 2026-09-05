@@ -1,0 +1,20 @@
+## .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+*.vs/
+.vs/
+*.userprefs
+publish/
+*.nupkg
+*.snupkg
+
+## Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
+
+## General
+.env
+*.log
